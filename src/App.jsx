@@ -299,10 +299,13 @@ const SectionHead = memo(function SectionHead({ num, title }) {
   );
 });
 
-const LanguageSwitcher = memo(function LanguageSwitcher({ lang, setLang }) {
+const LanguageSwitcher = memo(function LanguageSwitcher({ lang, setLang, isMobile }) {
   return (
     <div style={{
-      position: "fixed", top: "20px", left: "20px", zIndex: 200,
+      position: "fixed", top: "16px",
+      left: isMobile ? "auto" : "20px",
+      right: isMobile ? "16px" : "auto",
+      zIndex: 200,
       display: "flex", gap: "4px",
       background: "rgba(26,31,27,0.9)", backdropFilter: "blur(10px)",
       border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
@@ -336,8 +339,15 @@ const LanguageSwitcher = memo(function LanguageSwitcher({ lang, setLang }) {
 export default function App() {
   const [active, setActive] = useState("home");
   const [lang, setLang] = useState("en");
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const t = TRANSLATIONS[lang];
   const photoRef = useRef(null);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -366,25 +376,38 @@ export default function App() {
   return (
     <div style={{ background: bg, minHeight: "100vh", color: "white", fontFamily: "'DM Sans', sans-serif", display: "flex" }}>
 
-      <LanguageSwitcher lang={lang} setLang={setLang} />
+      <LanguageSwitcher lang={lang} setLang={setLang} isMobile={isMobile} />
 
-      <nav style={{ position: "fixed", top: 0, left: 0, width: "200px", height: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", zIndex: 100, borderRight: "1px solid rgba(255,255,255,0.06)", background: "rgba(26,31,27,0.95)", backdropFilter: "blur(10px)" }}>
-        <div style={{ position: "relative" }}>
-          <div style={{ position: "absolute", left: "16px", top: `${NAV_IDS.indexOf(active) * 44}px`, width: "3px", height: "44px", background: accent, borderRadius: "2px", transition: "top 0.3s cubic-bezier(0.4,0,0.2,1)" }} />
+      {!isMobile && (
+        <nav style={{ position: "fixed", top: 0, left: 0, width: "200px", height: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", zIndex: 100, borderRight: "1px solid rgba(255,255,255,0.06)", background: "rgba(26,31,27,0.95)", backdropFilter: "blur(10px)" }}>
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", left: "16px", top: `${NAV_IDS.indexOf(active) * 44}px`, width: "3px", height: "44px", background: accent, borderRadius: "2px", transition: "top 0.3s cubic-bezier(0.4,0,0.2,1)" }} />
+            {t.navItems.map((item, i) => (
+              <a key={item} href={"#" + NAV_IDS[i]} onClick={() => setActive(NAV_IDS[i])}
+                className="cv-nav-link"
+                style={{ display: "flex", alignItems: "center", height: "44px", width: "100%", paddingLeft: "36px", textDecoration: "none", color: active === NAV_IDS[i] ? accent : sub, fontSize: "13px", fontWeight: active === NAV_IDS[i] ? 600 : 400, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                {item}
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
+
+      {isMobile && (
+        <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100, display: "flex", justifyContent: "space-around", alignItems: "center", height: "60px", background: "rgba(26,31,27,0.97)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
           {t.navItems.map((item, i) => (
             <a key={item} href={"#" + NAV_IDS[i]} onClick={() => setActive(NAV_IDS[i])}
-              className="cv-nav-link"
-              style={{ display: "flex", alignItems: "center", height: "44px", width: "100%", paddingLeft: "36px", textDecoration: "none", color: active === NAV_IDS[i] ? accent : sub, fontSize: "13px", fontWeight: active === NAV_IDS[i] ? 600 : 400, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none", padding: "6px 10px", color: active === NAV_IDS[i] ? accent : sub, fontSize: "9px", fontWeight: active === NAV_IDS[i] ? 600 : 400, letterSpacing: "0.06em", textTransform: "uppercase", borderTop: active === NAV_IDS[i] ? `2px solid ${accent}` : "2px solid transparent", transition: "color 0.2s, border-color 0.2s", marginTop: "-2px" }}>
               {item}
             </a>
           ))}
-        </div>
-      </nav>
+        </nav>
+      )}
 
-      <main style={{ marginLeft: "200px", flex: 1, padding: "0 64px", maxWidth: "860px", position: "relative", zIndex: 1 }}>
+      <main style={{ marginLeft: isMobile ? 0 : "200px", flex: 1, padding: isMobile ? "0 20px" : "0 64px", maxWidth: isMobile ? "100%" : "860px", position: "relative", zIndex: 1, paddingBottom: isMobile ? "60px" : 0 }}>
 
         {/* PHOTO */}
-        <div ref={photoRef} style={{ position: "fixed", top: 0, right: 0, width: "50%", height: "100vh", zIndex: 0, pointerEvents: "none", willChange: "transform, opacity" }}>
+        <div ref={photoRef} style={{ position: "fixed", top: 0, right: 0, width: "50%", height: "100vh", zIndex: 0, pointerEvents: "none", willChange: "transform, opacity", display: isMobile ? "none" : "block" }}>
           <img
             src={photo}
             alt=""
@@ -429,7 +452,7 @@ export default function App() {
               </div>
             </AnimatedSection>
             <AnimatedSection delay={0.3}>
-              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "16px", lineHeight: 1.75, maxWidth: "400px", marginBottom: "36px" }}>{CV_DATA.about[lang]}</p>
+              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "16px", lineHeight: 1.75, maxWidth: isMobile ? "100%" : "400px", marginBottom: "36px" }}>{CV_DATA.about[lang]}</p>
               <button onClick={() => generateCV(lang, t)} className="cv-btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 24px", background: accent, color: bg, borderRadius: "8px", border: "none", cursor: "pointer", fontSize: "14px", fontWeight: 700, letterSpacing: "0.05em" }}>
                 {t.downloadCV}
               </button>
@@ -454,7 +477,7 @@ export default function App() {
               <p style={{ color: sub, fontSize: "12px", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "16px" }}>{t.education}</p>
               {CV_DATA.education.map((edu) => (
                 <div key={edu.institution} style={{ marginBottom: "24px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <div className="cv-flex-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                     <span style={{ fontSize: "15px", fontWeight: 600, color: "white" }}>{edu.institution}</span>
                     <span style={{ color: sub, fontSize: "13px", fontFamily: "monospace" }}>{edu.period}</span>
                   </div>
@@ -474,7 +497,7 @@ export default function App() {
               <div className="cv-card" style={{ marginBottom: "32px", padding: "28px", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", background: "rgba(255,255,255,0.02)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = `${accent}44`)}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
+                <div className="cv-flex-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
                   <span style={{ fontSize: "20px", fontWeight: 700, color: "white" }}>{exp.company}</span>
                   <span style={{ color: sub, fontSize: "12px", fontFamily: "monospace" }}>{exp.period}</span>
                 </div>
@@ -580,6 +603,12 @@ export default function App() {
 
         .cv-card { transition: border-color 0.2s, background 0.2s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
         .cv-card:active { transform: scale(0.982) !important; }
+
+        @media (max-width: 767px) {
+          .cv-nav-link:hover { transform: none !important; }
+          .cv-nav-link:active { transform: none !important; }
+          .cv-flex-row { flex-direction: column !important; gap: 2px !important; }
+        }
       `}</style>
     </div>
   );
